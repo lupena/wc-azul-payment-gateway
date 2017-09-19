@@ -1,17 +1,7 @@
-=== Azul Payment Gateway for WooCommerce ===
-Plugin Name:  Azul Payment Gateway for WooCommerce
-Contributors: Ideologic
-Author: ideologic.do
-Author URI: http://ideologic.do
-Tags: ecommerce, payment gateway, azul, dominicanrepublic, pagos azul, azul.com.do, ideologic, banco popular
-Requires at least: 4.0
-Tested up to: 4.7.4
-Stable tag: 1.0.0
-License: GPLv2 or later
-
+# Azul Payment Gateway for WooCommerce
 Azul Payment Gateway for accepting payments on your WooCommerce Store.
 
-== Description ==
+## Description 
 
 Azul Form integration is the easiest way to start processing online payments with Azul Dominicana.
 
@@ -20,7 +10,7 @@ Form integration is designed to pass transaction details from your website to Az
 This Plugin allows you to accept Azul.com.do Payments removing the need for you to maintain highly secure encrypted databases, obtain digital certificates and invest in high-level PCI DSS compliance.
 
 
-== Installation ==
+## Installation
 
 1. Download and unzip the latest release zip file.
 2. If you use the WordPress plugin uploader to install this plugin skip to step 4.
@@ -28,22 +18,28 @@ This Plugin allows you to accept Azul.com.do Payments removing the need for you 
 4. Activate the plugin through the 'Plugins' menu in WordPress Administration.
 5. Configure the plugin settings ( Woocommerce -> Settings -> Checkout -> Azul Payments )
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions
 
-= Do I need to do anything else for this to work? =
+1) Do I need to do anything else for this to work?
 
+```
 Yes : You need to contact AZUL and sign their contract to accept online payments.
+```
 
-= Is this plugin certified by Azul Dominicana ? =
+2) Is this plugin certified by Azul Dominicana ?
 
+```
 No : This plugin was created by Ideologic.do based on Azul Dominicana documentation and guidelines. It’s Open Source and free to use under your own risk.
+```
 
-= I want to use this plugin in Spanish, is that possible ? =
+3) I want to use this plugin in Spanish, is that possible ?
 
+```
 Yes : You can edit the labels and names in the plugin configuration ( WOOcommerce -> Settings -> Checkout -> Azul Payments )
+```
 
 
-== Changelog ==
+## Authors
 
-= 1.0.0 =
-* Initial Release
+* **Luis Peña** - *Initial work* - [Lupena](https://github.com/lupena)
+
