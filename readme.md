@@ -10,7 +10,14 @@ Form integration is designed to pass transaction details from your website to Az
 This Plugin allows you to accept Azul.com.do Payments removing the need for you to maintain highly secure encrypted databases, obtain digital certificates and invest in high-level PCI DSS compliance.
 
 
-## Installation
+## Installation (Wordpress Plugin Directory)
+
+1. Wordpress > Plugins > Add New.
+2. Search "ideologic.do".
+3. Click install on "Azul Payment Gateway for WooCommerce".
+4. Enjoy.
+
+## Manual Installation
 
 1. Download and unzip the latest release zip file.
 2. If you use the WordPress plugin uploader to install this plugin skip to step 4.
