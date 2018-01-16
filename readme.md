@@ -1,7 +1,7 @@
 # Azul Payment Gateway for WooCommerce
 Azul Payment Gateway for accepting payments on your WooCommerce Store.
 
-## Description 
+## Description
 
 Azul Form integration is the easiest way to start processing online payments with Azul Dominicana.
 
@@ -45,8 +45,12 @@ No : This plugin was created by Ideologic.do based on Azul Dominicana documentat
 Yes : You can edit the labels and names in the plugin configuration ( WOOcommerce -> Settings -> Checkout -> Azul Payments )
 ```
 
+4) My prices are in USD (or other currency), how can i charge in DOP (Dominican Peso) ?
+
+```
+Change your store to the desired currency ( WOOcommerce -> Settings ) and the plugin will resolve exchange rate to Dominican Pesos. (We use the Google API to obtain exchange rates).
+```
 
 ## Authors
 
 * **Luis Peña** - *Initial work* - [Lupena](https://github.com/lupena)
-
