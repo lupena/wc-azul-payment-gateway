@@ -3,12 +3,12 @@
  * Plugin Name: WC Azul Payment Gateway
  * Plugin URI: https://ideologic.do/
  * Description: WooCommerce Plugin for accepting payment through Azul Payment Gateway (POST).
- * Version: 1.0.0
+ * Version: 2.0.0
  * Author: ideologic.do
  * Author URI: https://ideologic.do
  * Contributors: Ideologic SRL
  * Requires at least: 4.0
- * Tested up to: 4.7.*
+ * Tested up to: 4.9.*
  *
  * Text Domain: wc-azul-paymentgateway
  * Domain Path: /lang/
@@ -33,10 +33,10 @@ function init_wc_gateway_azul()
         {
             global $woocommerce;
 
-            $this->id                        = 'wc_gateway_azul';
+            $this->id						= 'wc_gateway_azul';
             $this->method_title = __('Azul Payments', 'wc-azul-paymentgateway');
-            $this->icon                    = apply_filters('wc_gateway_azul_icon', 'azul-logo.png');
-            $this->has_fields    = false;
+            $this->icon					= apply_filters('wc_gateway_azul_icon', 'azul-logo.png');
+            $this->has_fields 	= false;
 
             $default_card_type_options = array(
                                                     'VISA' => 'VISA',
@@ -53,19 +53,20 @@ function init_wc_gateway_azul()
             $this->init_settings();
 
             // Define user set variables
-            $this->title                    = $this->settings['title'];
-            $this->description        = $this->settings['description'];
-            $this->private_key    = $this->settings['private_key'];
-            $this->merchant_name    = $this->settings['merchant_name'];
-            $this->mode             = $this->settings['mode'];
-            $this->merchant_id    = $this->settings['merchant_id'];
+            $this->title 					= $this->settings['title'];
+            $this->description 		= $this->settings['description'];
+            $this->private_key  	= $this->settings['private_key'];
+            $this->merchant_name 	= $this->settings['merchant_name'];
+            $this->mode         	= $this->settings['mode'];
+            $this->merchant_id   	= $this->settings['merchant_id'];
             $this->tax_percentage = $this->settings['tax_percentage'];
-            $this->redirecting_message = $this->settings['redirecting_message'];
 
+            $this->redirecting_message = $this->settings['redirecting_message'];
+            $this->fallback_currency_multiplier = $this->settings['fallback_currency_multiplier'];
 
 
             $this->notify_url   = str_replace('https:', 'http:', add_query_arg('wc-api', 'wc_gateway_azul', home_url('/')));
-            $this->CancelUrl        = $this->settings['cancel_url'];
+            $this->CancelUrl 		= $this->settings['cancel_url'];
 
             // Actions
             add_action('init', array( $this, 'successful_request' ));
@@ -122,6 +123,9 @@ function init_wc_gateway_azul()
                 $this->generate_settings_html(); ?>
 			</table><!--/.form-table-->
 				<p><?php _e('<br> <hr> <br>
+        <div>
+        Store Currency:' . get_woocommerce_currency() . '
+        </div>
 				<div style="float:right;text-align:right;">
 					Made with &hearts; at <a href="https://ideologic.do?ref=wc-azul-paymentgateway" target="_blank">ideologic.do</a> | ¿Need help or custom integrations? <a href="https://ideologic.do?ref=wc-azul-paymentgateway" target="_blank">Contact Us</a><br><br>
 					<a href="https://ideologic.do?ref=wc-azul-paymentgateway" target="_blank"><img src="' . plugins_url('images/ideologic-logo.png', __FILE__) . '">
@@ -199,6 +203,12 @@ function init_wc_gateway_azul()
                         'type' => 'text',
                         'description' => __('The percentage to calculate the tax of the order total. Example: 0.18', 'wc-azul-paymentgateway'),
                         'default' => '0.18'
+                    ),
+                    'fallback_currency_multiplier' => array(
+                        'title' => __('Default exchange Rate', 'wc-azul-paymentgateway'),
+                        'type' => 'text',
+                        'description' => __('If the currency exchange API doesn\'t work, multiply the order amount by this value.', 'wc-azul-paymentgateway'),
+                        'default' => '48.5'
                     )
                 );
         } // End init_form_fields()
@@ -216,6 +226,35 @@ function init_wc_gateway_azul()
         /**
          * Generate the form with the params
          **/
+
+        public function get_order_total_DOP($order)
+        {
+            $total = $order->get_total();
+            $currencyCode = get_woocommerce_currency(); //DOP
+
+            if ($currencyCode == 'DOP') {
+                return $total;
+            } else {
+                return $this->exchange_to_DOP($total, $currencyCode);
+            }
+        }
+
+        public function exchange_to_DOP($amount, $currencyCode)
+        {
+            $fallback_currency_multiplier = $this->fallback_currency_multiplier;
+
+            try {
+                $data = file_get_contents("https://finance.google.com/finance/converter?a=$amount&from=$currencyCode&to=DOP");
+                preg_match("/<span class=bld>(.*)<\/span>/", $data, $converted);
+                $converted = preg_replace("/[^0-9.]/", "", $converted[1]);
+                return number_format(round($converted, 3), 2);
+            } catch (Exception $e) {
+                return $amount * $fallback_currency_multiplier;
+            }
+
+            return $amount * $fallback_currency_multiplier;
+        }
+
         public function generate_azul_form($order_id)
         {
             global $woocommerce;
@@ -234,23 +273,28 @@ function init_wc_gateway_azul()
             $merchantType = 'ecommerce';
             $currencyCode = '$';
 
-            $orderTotal = $order->get_total();
+            $orderTotal = $this->get_order_total_DOP($order); //$order->get_total();
+            $taxAmount  = floatval(str_replace(",", "", $orderTotal)) * floatval($this->tax_percentage);
+
+            $taxAmount = number_format((float)$taxAmount, 2, '.', '');
+            $taxAmount = str_replace('.', '', $taxAmount);
+
             $orderTotal = str_replace('.', '', $orderTotal);
             $orderTotal = str_replace(',', '', $orderTotal);
 
 
             //Form Post Params
             //Important: The order of the following parameters are ESSENTIAL for the encryption to work.
-            $params['MerchantId']         = $this->merchant_id;
-            $params['MerchantName']         = $this->merchant_name;
-            $params['MerchantType']     = $merchantType;
-            $params['CurrencyCode']     = $currencyCode;
-            $params['OrderNumber']         = $order_id;
-            $params['Amount']                 = $orderTotal;
-            $params['ITBIS']                     = $params['Amount'] * $this->tax_percentage;
-            $params['ApprovedUrl']         = $this->notify_url;
-            $params['DeclinedUrl']         = $this->notify_url;
-            $params['CancelUrl']             = $this->CancelUrl;
+            $params['MerchantId'] 		 = $this->merchant_id;
+            $params['MerchantName']		 = $this->merchant_name;
+            $params['MerchantType'] 	 = $merchantType;
+            $params['CurrencyCode'] 	 = $currencyCode;
+            $params['OrderNumber'] 		 = $order_id;
+            $params['Amount'] 			 = $orderTotal;
+            $params['ITBIS'] 			 = $taxAmount;
+            $params['ApprovedUrl'] 		 = $this->notify_url;
+            $params['DeclinedUrl'] 		 = $this->notify_url;
+            $params['CancelUrl'] 			 = $this->CancelUrl;
             $params['ResponsePostUrl'] = $this->notify_url;
             $params['UseCustomField1'] = '0';
             $params['CustomField1Label'] = 'Custom1';
@@ -312,8 +356,8 @@ function init_wc_gateway_azul()
             $order = new WC_Order($order_id);
 
             return array(
-                'result'    => 'success',
-                'redirect'    => $order->get_checkout_payment_url(true)
+                'result' 	=> 'success',
+                'redirect'	=> $order->get_checkout_payment_url(true)
             );
         }
 
@@ -335,15 +379,15 @@ function init_wc_gateway_azul()
             global $woocommerce;
 
             //Important: The order of the following parameters are ESSENTIAL for the encryption to work.
-            $params['OrderNumber']                = $_GET['OrderNumber'];
-            $params['Amount']                        = $_GET['Amount'];
-            $params['AuthorizationCode']    = $_GET['AuthorizationCode'];
-            $params['DateTime']                    = $_GET['DateTime'];
-            $params['ResponseCode']            = $_GET['ResponseCode'];
-            $params['IsoCode']                        = $_GET['IsoCode'];
-            $params['ResponseMessage']        = $_GET['ResponseMessage'];
-            $params['ErrorDescription']    = $_GET['ErrorDescription'];
-            $params['RRN']                                = $_GET['RRN'];
+            $params['OrderNumber'] 				= $_GET['OrderNumber'];
+            $params['Amount'] 						= $_GET['Amount'];
+            $params['AuthorizationCode'] 	= $_GET['AuthorizationCode'];
+            $params['DateTime'] 					= $_GET['DateTime'];
+            $params['ResponseCode'] 			= $_GET['ResponseCode'];
+            $params['IsoCode'] 						= $_GET['IsoCode'];
+            $params['ResponseMessage'] 		= $_GET['ResponseMessage'];
+            $params['ErrorDescription'] 	= $_GET['ErrorDescription'];
+            $params['RRN'] 								= $_GET['RRN'];
 
             $post_values = "";
             foreach ($params as $key => $value) {
