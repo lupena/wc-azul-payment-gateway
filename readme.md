@@ -1,3 +1,5 @@
+⚠️DEPRECATED⚠️: This project is no longer maintained.
+
 # Azul Payment Gateway for WooCommerce
 Azul Payment Gateway for accepting payments on your WooCommerce Store.
 
